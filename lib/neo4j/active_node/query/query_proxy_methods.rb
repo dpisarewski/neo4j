@@ -18,7 +18,9 @@ module Neo4j
         end
 
         def first_and_last(order, target)
-          self.order(order).limit(1).pluck(target).first
+          result = self.order(order).limit(1).pluck(target).first
+          watch_obj result
+          result
         end
 
         # @return [Fixnum] number of nodes of this class

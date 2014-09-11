@@ -69,6 +69,10 @@ module Neo4j
           @relationship_class
         end
 
+        def autosave?
+          @autosave == true
+        end
+
         private
 
         def get_direction(relationship_cypher, create)
@@ -108,6 +112,7 @@ module Neo4j
           @origin = options[:origin] && options[:origin].to_sym
           @relationship_class = options[:rel_class]
           @relationship_type  = options[:type] && options[:type].to_sym
+          @autosave = options[:autosave]
         end
         
         # Return basic details about association as declared in the model

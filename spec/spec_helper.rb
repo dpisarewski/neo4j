@@ -1,7 +1,8 @@
 # To run coverage via travis
 require 'coveralls'
-Coveralls.wear!
-
+# Coveralls.wear!
+require 'simplecov'
+SimpleCov.start
 # To run it manually via Rake
 if ENV['COVERAGE']
   require 'simplecov'

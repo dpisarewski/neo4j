@@ -78,7 +78,13 @@ module Neo4j::ActiveNode
       end
 
       def validate?
+        # mark this as true for now until we can investigate this more
         true
+        # !association.options[:validate].nil? ? association.options[:validate] : (association.autosave? || macro == :has_many)
+      end
+
+      def autosave?
+        @autosave ||= association.autosave?
       end
     end
   end
