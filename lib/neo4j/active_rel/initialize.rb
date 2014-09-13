@@ -6,9 +6,9 @@ module Neo4j::ActiveRel
     attr_reader :_persisted_obj
 
     # called when loading the rel from the database
-    # @param [Hash] properties properties of this relationship
-    # @param [Neo4j::Relationship] start_node the starting node in the relationship.
-    # @param [Neo4j::Relationship] end_node the ending node in the relationship
+    # @param [Hash] persisted_rel properties properties of this relationship
+    # @param [Neo4j::Relationship] start_node_id the starting node in the relationship.
+    # @param [Neo4j::Relationship] end_node_id the ending node in the relationship
     # @param [String] type the relationship type
     def init_on_load(persisted_rel, start_node_id, end_node_id, type)
       @_persisted_obj = persisted_rel

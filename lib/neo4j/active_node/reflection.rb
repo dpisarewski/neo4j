@@ -12,15 +12,15 @@ module Neo4j::ActiveNode
 
     # Adds methods to the class related to creating and retrieving reflections.
     module ClassMethods
-      # @param macro [Symbol] the association type, :has_many or :has_one
-      # @param name [Symbol] the association name
-      # @param association_object [Neo4j::ActiveNode::HasN::Association] the association object created in the course of creating this reflection
+      # @param [Symbol] macro the association type, :has_many or :has_one
+      # @param [Symbol] name the association name
+      # @param [Neo4j::ActiveNode::HasN::Association] association_object the association object created in the course of creating this reflection
       def create_reflection(macro, name, association_object)
         self.reflections = self.reflections.merge(name => AssociationReflection.new(macro, name, association_object))
       end
 
       private :create_reflection
-      # @param [Symbol] an association declared on the model
+      # @param [Symbol] association an association declared on the model
       # @return [Neo4j::ActiveNode::Reflection::AssociationReflection] of the given association
       def reflect_on_association(association)
         reflections[association.to_sym]
@@ -39,7 +39,7 @@ module Neo4j::ActiveNode
       # The name of the association
       attr_reader :name
 
-      # The type of association
+      # The type of association, :has_many or :has_one
       attr_reader :macro
 
       # The association object referenced by this reflection
@@ -51,32 +51,37 @@ module Neo4j::ActiveNode
         @association  = association
       end
 
-      # Returns the target model
+      # @return [Class] The target model
       def klass
         @klass ||= class_name.constantize
       end
 
-      # Returns the name of the target model
+      # @return [String] the name of the target model
       def class_name
         @class_name ||= association.target_class.name
       end
 
+      # @return [Class] model used by the association, if any
       def rel_klass
         @rel_klass ||= rel_class_name.constantize
       end
 
+      # @return [String] the name of the ActiveRel class used by the association, if any
       def rel_class_name
         @rel_class_name ||= association.relationship_class.name.to_s
       end
 
+      # @return [String] The Neo4j relationship type
       def type
         @type ||= association.relationship_type
       end
 
+      # @return [Boolean] Returns true if association is :has_many
       def collection?
         macro == :has_many
       end
 
+      # @return [Boolean] Always returns true at the moment for debugging
       def validate?
         # mark this as true for now until we can investigate this more
         true
