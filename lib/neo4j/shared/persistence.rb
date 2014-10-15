@@ -1,6 +1,15 @@
 module Neo4j::Shared
   module Persistence
 
+    class RecordInvalidError < RuntimeError
+      attr_reader :record
+
+      def initialize(record)
+        @record = record
+        super(@record.errors.full_messages.join(", "))
+      end
+    end
+
     extend ActiveSupport::Concern
     include Neo4j::TypeConverters
 
@@ -27,6 +36,36 @@ module Neo4j::Shared
     def update_attribute!(attribute, value)
       send("#{attribute}=", value)
       self.save!
+    end
+
+    def save(*)
+      update_magic_properties
+      begin
+        tx = Neo4j::Transaction.new
+        result = create_or_update
+        result ? result : tx.failure and return result
+      rescue Exception => e
+        tx.failure
+        raise e
+      ensure
+        tx.close
+      end
+    end
+
+    # Persist the object to the database.  Validations and Callbacks are included
+    # by default but validation can be disabled by passing :validate => false
+    # to #save!  Creates a new transaction.
+    #
+    # @raise a RecordInvalidError if there is a problem during save.
+    # @param (see Neo4j::Rails::Validations#save)
+    # @return nil
+    # @see #save
+    # @see Neo4j::Rails::Validations Neo4j::Rails::Validations - for the :validate parameter
+    # @see Neo4j::Rails::Callbacks Neo4j::Rails::Callbacks - for callbacks
+    def save!(*args)
+      unless save(*args)
+        raise RecordInvalidError.new(self)
+      end
     end
 
     def create_or_update

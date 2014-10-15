@@ -29,9 +29,13 @@ describe Neo4j::ActiveNode::Validations do
 
   describe 'save' do
     let(:session) { double("Session")}
+    let(:transaction) { double("Neo4j::Transaction") }
+
     before do
       @session = double("Mock Session")
       Neo4j::Session.stub(:current).and_return(session)
+      Neo4j::Transaction.stub(:new).and_return(transaction)
+      transaction.stub(:close).and_return(true)
     end
 
     context 'when valid' do

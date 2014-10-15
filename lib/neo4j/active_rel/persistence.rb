@@ -9,13 +9,8 @@ module Neo4j::ActiveRel
 
     def clear_association_cache; end
 
-    def save(*)
-      update_magic_properties
-      create_or_update
-    end
-
-    def save!(*args)
-      raise RelInvalidError.new(self) unless save(*args)
+    def save(*args)
+      super
     end
 
     def create_model(*)

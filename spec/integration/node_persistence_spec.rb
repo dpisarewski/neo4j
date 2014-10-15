@@ -9,12 +9,15 @@ describe "Neo4j::ActiveNode" do
     has_one :out, :parent, model_class: false
   end
 
+  let(:transaction) { double("Neo4j::Transaction") }
 
   before do
     SecureRandom.stub(:uuid) { 'secure123' }
     @session = double("Mock Session", create_node: nil)
     MyThing.stub(:cached_class?).and_return(false)
     Neo4j::Session.stub(:current).and_return(@session)
+    Neo4j::Transaction.stub(:new).and_return(transaction)
+    transaction.stub(:close).and_return(true)
   end
 
   describe 'new' do
@@ -176,7 +179,7 @@ describe "Neo4j::ActiveNode" do
 
     it 'does raise an exception if not valid' do
       thing.stub(:valid?).and_return(false)
-      expect{thing.update_attribute!(:a, 42)}.to raise_error(Neo4j::ActiveNode::Persistence::RecordInvalidError)
+      expect{thing.update_attribute!(:a, 42)}.to raise_error(Neo4j::Shared::Persistence::RecordInvalidError)
     end
   end
 end

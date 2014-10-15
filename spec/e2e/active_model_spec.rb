@@ -181,6 +181,8 @@ describe Neo4j::ActiveNode do
       attr_accessor :update_called, :save_called, :destroy_called, :validation_called
       include Neo4j::ActiveNode
 
+      property :name
+
       before_save do
         @save_called = true
       end
@@ -223,6 +225,22 @@ describe Neo4j::ActiveNode do
       expect(c.validation_called).to be true
     end
 
+    context 'with errors prior to completion' do
+      it 'failed after_save results in a failed transaction' do
+        c = Company.create(name: 'bar')
+        Company.after_save { raise StandardError }
+        expect { c.name = 'foo' and c.save }.to raise_error
+        c.reload
+        expect(c.name).not_to eq 'foo'
+      end
+
+      it 'failed after_create results in a failed transaction' do
+        count = Company.count
+        Company.after_create { raise StandardError }
+        expect { Company.create(name: 'foo') }.to raise_error
+        expect(Company.count).to eq count
+      end
+    end
   end
 
   describe 'cached classnames' do
@@ -501,11 +519,21 @@ describe Neo4j::ActiveNode do
     end
 
     class MyRelClass
+      attr_accessor :do_raise
+
       include Neo4j::ActiveRel
       from_class FromClass
       to_class ToClass
       property :score
       type 'rel_class_type'
+
+      def self.do_raise
+        @do_raise
+      end
+
+      def self.do_raise=(bool = nil)
+        @do_raise = bool
+      end
     end
 
     let(:from_node) { FromClass.create }
@@ -524,8 +552,8 @@ describe Neo4j::ActiveNode do
 
     context 'with rel created from activerel' do
       let(:rel) { MyRelClass.create(from_node: from_node, to_node: to_node) }
-
       after(:each) { rel.destroy }
+
       it 'creates the rel' do
         expect(rel.from_node).to eq from_node
         expect(rel.to_node).to eq to_node
@@ -537,6 +565,31 @@ describe Neo4j::ActiveNode do
         rel.save and rel.reload
         expect(rel.score).to eq 9000
       end
+
+      describe "before_save and after_save failure" do
+        after(:each) { MyRelClass.do_raise = false }
+
+        it 'rolls back transactions when after_save fails' do
+          MyRelClass.do_raise = true
+          expect(rel.score).to be_nil
+          rel.score = 9000
+
+          MyRelClass.after_save { raise StandardError if MyRelClass.do_raise }
+          expect { rel.save }.to raise_error
+          reloaded = MyRelClass.find(rel.neo_id)
+          expect(reloaded.score).to be_nil
+        end
+
+        it 'rolls back transaction when after_create fails' do
+          MyRelClass.after_create { raise StandardError if MyRelClass.do_raise }
+          MyRelClass.do_raise = true
+          count = from_node.others.count
+          expect { rel }.to raise_error
+          from_node.reload
+          expect(from_node.others.count).to eq count
+        end
+      end
+
 
       # it 'does not update every rel' do
       #   first_rel_id = rel.id
@@ -557,7 +610,7 @@ describe Neo4j::ActiveNode do
       end
     end
 
-    describe 'ActiveRel and its queries' do
+    describe 'ActiveRel and queries' do
       before do
         Neo4j::Config[:cache_class_names] = true
         @rel1 = MyRelClass.create(from_node: from_node, to_node: to_node, score: 99)
