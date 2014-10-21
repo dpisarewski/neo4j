@@ -73,6 +73,11 @@ module Neo4j
         alias_method :offset, :skip
         alias_method :order_by, :order
 
+        # For getting specific columns and accessing them using the same return values assigned in the query
+        def return(*args)
+          self.query.return(*args)
+        end
+
         # For getting variables which have been defined as part of the association chain
         def pluck(*args)
           self.query.pluck(*args)

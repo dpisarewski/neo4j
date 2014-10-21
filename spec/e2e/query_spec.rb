@@ -240,6 +240,8 @@ describe 'Query API' do
 
           context 'students, age 15, who are taking level 101 lessons' do
             it { Student.as(:student).where(age: 15).lessons(:lesson).where(level: 101).pluck(:student).should == [danny] }
+            it { Student.as(:student).where(age: 15).lessons(:lesson).where(level: 101).return(:student).first.student.should == danny }
+            
             it { Student.where(age: 15).lessons(:lesson).where(level: '101').pluck(:lesson).should_not == [[othmar]] }
           end
 
