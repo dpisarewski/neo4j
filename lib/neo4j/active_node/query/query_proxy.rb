@@ -293,9 +293,8 @@ module Neo4j
         private
 
         def call_class_method(method_name, *args)
-          args[2] = self
-          result = @model.send(method_name, *args)
-          result
+          args[2] = self if @model.reflections[method_name]
+          @model.send(method_name, *args)
         end
 
         def build_deeper_query_proxy(method, args)
