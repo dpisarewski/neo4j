@@ -261,6 +261,26 @@ describe 'query_proxy_methods' do
         end
       end
 
+      context 'with an array' do
+        context 'of nodes' do
+          after { @john.lessons.first_rel_to(@math).destroy }
+
+          it 'generates cypher using IN with the IDs of contained nodes' do
+            expect(@john.lessons.match_to([@history, @math]).to_cypher).to include ('AND result.uuid IN')
+            expect(@john.lessons.match_to([@history, @math]).to_a).to eq [@history]
+            @john.lessons << @math
+            expect(@john.lessons.match_to([@history, @math]).to_a.count).to eq 2
+            expect(@john.lessons.match_to([@history, @math]).to_a).to include(@history, @math)
+          end
+        end
+
+        context 'of IDs' do
+          it 'allows an array of IDs' do
+            expect(@john.lessons.match_to([@history.id]).to_a).to eq [@history]
+          end
+        end
+      end
+
       context 'with a null object' do
         it 'generates cypher with 1 = 2' do
           expect(@john.lessons.match_to(nil).to_cypher).to include('AND 1 = 2')
@@ -307,6 +327,19 @@ describe 'query_proxy_methods' do
 
       it 'returns nil when nothing matches' do
         expect(@john.lessons.first_rel_to(@math)).to be_nil
+      end
+    end
+
+    # also aliased as `all_rels_to`
+    describe 'rels_to' do
+      before { 3.times { @john.lessons << @history } }
+      it 'returns all relationships across a QueryProxy chain to a given node' do
+        all_rels = @john.lessons.rels_to(@history)
+        expect(all_rels).to be_a(Enumerable)
+        expect(all_rels.count).to eq @john.lessons.match_to(@history).count
+        @john.lessons.all_rels_to(@history).map(&:destroy)
+        @john.clear_association_cache
+        expect(@john.lessons.all_rels_to(@history)).to be_empty
       end
     end
 
