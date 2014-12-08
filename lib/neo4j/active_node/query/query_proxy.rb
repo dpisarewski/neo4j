@@ -313,12 +313,6 @@ module Neo4j
 
         private
 
-        def call_class_method(method_name, *args)
-          args[2] = self
-          result = @model.send(method_name, *args)
-          result
-        end
-
         def build_deeper_query_proxy(method, args)
           self.dup.tap do |new_query|
             args.each do |arg|
