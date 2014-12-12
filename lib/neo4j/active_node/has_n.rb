@@ -148,7 +148,7 @@ module HasN
 
         module_eval(%Q{
           def #{name}=(other_node)
-            raise(Neo4j::ActiveNode::HasN::NonPersistedNodeError, 'Unable to create relationship with non-persisted nodes') unless self.persisted?
+            save unless self.persisted?
             clear_association_cache
             #{name}_query_proxy(rel: :r).query_as(:n).delete(:r).exec
             #{name}_query_proxy << other_node
